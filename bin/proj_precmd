@@ -1,0 +1,15 @@
+#!/usr/bin/env python
+import os
+import sys
+
+def main():
+    env = os.environ
+    set_cmd = 'set prompt = "'
+    if 'PROJ' in env and env.get('PROJ').strip():
+        set_cmd += ' ${_COL_PROJ}%B${PROJ}%b${_COL}' 
+    set_cmd += ' ${_COL_FOLDER}%c03${_COL} > "'
+    print set_cmd
+
+
+if __name__ == '__main__':
+    main()

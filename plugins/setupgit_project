@@ -1,0 +1,60 @@
+#!/usr/bin/env python
+"""project plugin.
+
+given a project directory, sets up the project with git.
+
+"""
+import os
+import sys
+import argparse
+import subprocess
+
+
+def run_cmd(cmd):
+    """wrapper to for running commands."""
+    print 'running -- %s' % cmd
+    os.system(cmd)
+    # subprocess.Popen(cmd, shell=True, env=os.environ)
+
+
+def parse_arguments():
+    """parse args."""
+    args = sys.argv[:]
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('project_name', type=str)
+    parser.add_argument('project_dir', type=str)
+
+    args = parser.parse_args()
+    return args
+
+
+def setup_git(project_name, project_dir):
+    print '*' * 80
+    print ' ' * 5, 'setting up git'
+    print '*' * 80
+    os.chdir(project_dir)
+    github_username = 'redesigndavid'
+    cmds = [
+        'cd %s' % project_dir,
+        'echo "# redesigndavid_dotfiles" >> README.md',
+        'git init',
+        'git add README.md',
+        'git commit -m "first commit"',
+        'git remote add origin git@github.com:%s/%s.git' % (
+            github_username, project_name),
+        'git push -u origin master']
+
+    for cmd in cmds:
+        run_cmd(cmd)
+
+
+def main():
+    args = parse_arguments()
+    project_name = args.project_name
+    project_dir = args.project_dir
+    setup_git(project_name, project_dir)
+
+
+if __name__ == '__main__':
+    main()

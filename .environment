@@ -1,0 +1,20 @@
+
+
+
+setenv PROJ projects 
+setenv PROJHOME "/Users/$USER/projects/$PROJ"
+
+setenv PLAYER mplayer
+setenv VID_OUTPUT "$PROJHOME/vidcaps"
+setenv XCODE_SDK iphonesimulator6.1
+setenv XCODE_CONF "DEBUG clean build"
+setenv XCODE_BUILD_PATH "$PROJHOME/build"
+
+setenv PATH $PROJHOME/bin:$PATH
+setenv PROJRESOURCES $PROJHOME/$PROJ/Resources
+source $PROJHOME/.aliases
+
+
+cd $PROJHOME
+
+

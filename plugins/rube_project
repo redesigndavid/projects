@@ -1,0 +1,95 @@
+#!/usr/bin/env python
+"""project plugin.
+
+given a project directory, sets up the project with cocos2d.
+
+"""
+import os
+import sys
+import argparse
+import subprocess
+import shutil
+from glob import glob
+
+
+from xprojedit import interface
+
+
+RUBE_SRC = '/Users/redesigndavid/dev/box2d-read-only/Box2D/Box2D'
+PROJ_RUBE = '%s/%s_cocos2d/cocos2d/external/Box2D'
+PROJ = '%s/%s_cocos2d'
+XPROJ = '%s/%s_cocos2d/proj.ios_mac/%s_cocos2d.xcodeproj/project.pbxproj'
+
+RUBETST_SRC = '/Users/redesigndavid/projects/rubetest/rubetest_cocos2d/src'
+RUBETST_RES = '/Users/redesigndavid/projects/rubetest/rubetest_cocos2d/res'
+
+
+def run_cmd(cmd):
+    """wrapper to for running commands."""
+    print 'running: %s' % cmd
+    return subprocess.call(cmd.split(), env=os.environ, shell=False)
+
+
+def parse_arguments():
+    """parse args."""
+    args = sys.argv[:]
+    parser = argparse.ArgumentParser()
+    parser.add_argument('project_name', type=str)
+    parser.add_argument('project_dir', type=str)
+
+    args = parser.parse_args()
+    return args
+
+
+def setup_rube(project_name, project_dir):
+    print '*' * 80
+    print 'setting up rube'
+    print 'project name: %s' % project_name
+    print 'project dir: %s' % project_dir
+
+    # update rube folder
+    rube_source = RUBE_SRC
+    proj_rube = PROJ_RUBE % (project_dir, project_name)
+    shutil.rmtree(proj_rube)
+    shutil.copytree(rube_source, proj_rube)
+
+    # copy files
+    proj_src = os.path.join(PROJ % (project_dir, project_name), 'src')
+    proj_res = os.path.join(PROJ % (project_dir, project_name), 'res')
+
+    shutil.rmtree(proj_src)
+    shutil.rmtree(proj_res)
+
+    shutil.copytree(RUBETST_SRC, proj_src)
+    shutil.copytree(RUBETST_RES, proj_res)
+
+    project = XPROJ % (project_dir, project_name, project_name)
+
+    # update file references
+    interface.remove_location(project, '//src')
+    interface.add_folder(project, proj_src, '//')
+
+    # interface.remove_location(project, '//res')
+    # interface.add_folder(project, proj_res, '//')
+
+    # add links
+    for resfile in glob('%s/*.*' % proj_res):
+        resfile = os.path.join(proj_res, resfile)
+        run_cmd("xprojedit addfiles %s //res %s" % (project, resfile))
+
+    run_cmd("xprojedit addfiles %s // %s" % (project, os.path.join(proj_res, 'images')))
+    run_cmd("xprojedit addfiles %s // %s" % (project, os.path.join(proj_res, 'sounds')))
+    run_cmd("xprojedit addfiles %s // %s" % (project, os.path.join(proj_res, 'fonts')))
+
+    print '*' * 80
+
+
+def main():
+    args = parse_arguments()
+    project_name = args.project_name
+    project_dir = args.project_dir
+    setup_rube(project_name, project_dir)
+
+
+if __name__ == '__main__':
+    main()

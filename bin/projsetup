@@ -1,0 +1,120 @@
+#!/usr/bin/env python
+import os
+import sys
+import argparse
+import shutil
+
+from project_utils import run_cmd
+from project_utils import mkdirs
+from project_utils import list_plugins
+from project_utils import get_plugin_path
+from project_utils import get_project_path
+from project_utils import get_generics_path
+from project_utils import list_projects
+
+
+# Create Parser with Sub Commands
+def get_parser():
+    command = __file__.split('/')[-1]
+
+    parser = argparse.ArgumentParser()
+    subparser = parser.add_subparsers(title="subcommands")
+
+    listparser = subparser.add_parser("list", help="list projects")
+    listparser.set_defaults(func=list_command)
+
+    removeparser = subparser.add_parser("remove", help="remove project")
+    removeparser.add_argument("proj", help="name of project to remove")
+    removeparser.set_defaults(func=remove_command)
+
+    newparser = subparser.add_parser("new", help='create new project')
+    # eg_plugins is only a string for help
+    sorted_plugins = sorted(list_plugins())[:3]
+    if not sorted_plugins:
+        sorted_plugins = ['foo', 'bar']
+    eg_plugins = 'e.g. %s' % ' '.join('+%s' % pl for pl in sorted_plugins)
+
+    newparser.add_argument("proj",
+                           help="name of new project")
+    newparser.add_argument("plugs", nargs="*",
+                           help=("run plugin script (%s)" % eg_plugins))
+    newparser.set_defaults(func=new_command)
+
+    args = parser.parse_args()
+
+    return args
+
+
+# New Command Function and Helper Functions
+def _get_rep_dict(args):
+    """create and return a dictionary using for swapping vars in generics."""
+    return {'PROJ': args.proj}
+
+
+def write_generics(new_path, replacement_dict):
+    """copy files from generics folder and swap variables from rep dict."""
+    generics_dir = get_generics_path()
+    generics = os.listdir(generics_dir)
+    for generic in generics:
+        generic_path = os.path.join(generics_dir, generic)
+        this_new_path = os.path.join(new_path, generic)
+        gen_file = file(generic_path, 'r')
+        new_file = file(this_new_path, 'w')
+        for line in gen_file:
+            for k, to_v in replacement_dict.items():
+                fr_k = "$$%s$$" % k
+                line = line.replace(fr_k, to_v)
+            new_file.write(line)
+
+
+def run_plugins(plugins, project_name, project_dir):
+    """run plugins with correct args."""
+    plugins = ['%s_project' % plug.strip('+') for plug in plugins]
+    for plug in plugins:
+
+        plugin_path = get_plugin_path(plug)
+        command = '%s %s %s' % (plugin_path, project_name, project_dir)
+
+        print 'running: %s' % command
+        run_cmd(command)
+
+
+def new_command(args):
+    """run new command steps."""
+
+    # run checks
+    plugins = list_plugins()
+    for plug in args.plugs:
+        if plug.strip('+') not in plugins:
+            print '%s not understood' % plug
+            return 1
+
+    replacement_dict = _get_rep_dict(args)
+    project_path = get_project_path(args.proj)
+
+    mkdirs(['log', 'build'], project_path)
+    write_generics(project_path, replacement_dict)
+    run_plugins(args.plugs, args.proj, project_path)
+
+
+# List Command function
+def list_command(args):
+    """list possible projects."""
+    projects = list_projects()
+    print '\n'.join(projects)
+
+
+# Remove Project Function
+def remove_command(args):
+    project_path = get_project_path(args.proj)
+    shutil.rmtree(project_path)
+
+
+# Main Function
+def main():
+    args = get_parser()
+    return args.func(args)
+
+
+if __name__ == '__main__':
+    sys.exit(main())

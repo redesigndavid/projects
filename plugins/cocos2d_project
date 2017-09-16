@@ -1,0 +1,81 @@
+#!/usr/bin/env python
+"""project plugin.
+
+given a project directory, sets up the project with cocos2d.
+
+"""
+import os
+import sys
+import argparse
+import subprocess
+
+def run_cmd(cmd):
+    """wrapper to for running commands."""
+    print 'running: %s' % cmd 
+    return subprocess.call(cmd.split(), env=os.environ, shell=False)
+    
+
+
+def parse_arguments():
+    """parse args."""
+    args = sys.argv[:]
+    parser = argparse.ArgumentParser()
+    parser.add_argument('project_name', type=str)
+    parser.add_argument('project_dir', type=str)
+
+    args = parser.parse_args()
+    return args
+
+def setup_cocos(project_name, project_dir):
+    print '*' * 80
+    print 'setting up cocos2d'
+    print 'project name: %s' % project_name
+    print 'project dir: %s' % project_dir
+    command = 'cocos new %s_cocos2d -p com.redesigndavid.%s -l cpp -d %s'
+    command %= (project_name,
+                project_name,
+                project_dir)
+    print 'running cocos build command'
+    run_cmd(command)
+
+    print 'linking clang in classes' 
+    source_clang = os.path.join(project_dir,
+                                '%s_cocos2d' % project_name,
+                                'proj.ios_mac',
+                                '.clang_complete')
+    classes_clang = os.path.join(project_dir,
+                                 '%s_cocos2d' % project_name,
+                                 'Classes',
+                                 '.clang_complete')
+    link_cmd = 'ln -sf %s %s' % (source_clang, classes_clang) 
+    run_cmd(link_cmd)
+
+    # add environment variables
+    print "adding variables to projects environment"
+    envfile = file('%s/.environment' % project_dir, 'wa')
+    envfile.write('# set CC to use special clang++\n')
+    envfile.write('setenv CC ~/.vim/bin/clang++\n')
+    envfile.write('setenv BUILD_STYLE mac\n')
+    envfile.close()
+
+    # and aliases to build and make
+    print "adding aliases to projects alias file"
+    aliascmd = ('alias build "pushd `pwd` && cd %s/%s_cocos2d '
+                '&& cocos run -p $BUILD_STYLE && popd"\n')
+    aliascmd %= (project_dir, project_name)
+    aliasfile = file('%s/.aliases' % project_dir, 'wa')
+    aliasfile.write('# add build alias\n')
+    aliasfile.write(aliascmd)
+    aliasfile.close()
+
+    print '*' * 80
+
+def main():
+    args = parse_arguments()
+    project_name = args.project_name 
+    project_dir = args.project_dir
+    setup_cocos(project_name, project_dir)
+
+
+if __name__ == '__main__':
+    main()

@@ -1,0 +1,44 @@
+#!/usr/bin/env python
+"""project plugin.
+
+given a project directory, sets up the project with cocos2d.
+
+"""
+import os
+import sys
+import argparse
+import subprocess
+
+def run_cmd(cmd):
+    """wrapper to for running commands."""
+    return subprocess.call(cmd.split(), env=os.environ, shell=True)
+    
+
+
+def parse_arguments():
+    """parse args."""
+    args = sys.argv[:]
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('project_name', type=str)
+    parser.add_argument('project_dir', type=str)
+
+    args = parser.parse_args()
+    return args
+
+def setup_cocos(project_name, project_dir):
+    print '*' * 80
+    print ' ' * 5, 'setting up cocos2d'
+    print '*' * 80
+
+def main():
+    args = parse_arguments()
+    project_name = args.project_name 
+    project_dir = args.project_dir
+    setup_cocos(project_name, project_dir)
+
+    import pdb;pdb.set_trace();
+
+
+if __name__ == '__main__':
+    main()

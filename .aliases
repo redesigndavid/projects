@@ -1,0 +1,7 @@
+alias vids 'cd $VID_OUTPUT; ls -ltr'
+alias e "emacs --load $PROJHOME/.emacs \!*"
+
+complete ee "p,*,F:/Users/$USER/projects/$PROJ/$PROJ,"
+alias ee "e $PROJHOME/$PROJ/\!*"
+
+echo ' '

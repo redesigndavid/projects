@@ -1,0 +1,27 @@
+#!/bin/tcsh
+
+# add colors to shell
+set _COL_PROJ="%{\033[1;36m%}"
+set _COL_FOLDER="%{\033[0;32m%}"
+set _COL_WARN="%{\033[1;33m%}"
+set _COL_ALERT="%{\033[1;31m%}"
+set _COL_COOL="%{\033[1;34m%}"
+set _COL_WHITE="%{\033[0;37m%}"
+set _COL="%{\033[0m%}" 
+
+# set precmd
+alias precmd 'eval `~/projects/projects/bin/proj_precmd`'
+alias proj 'eval `_proj_select \!*`'
+
+# set PATHS 
+setenv PYTHONPATH "${PYTHONPATH}:${HOME}/projects/projects/python"
+setenv PATH "${PATH}:${HOME}/projects/projects/bin"
+
+# create empty PROJ variable
+setenv PROJ 
+
+# make a list of the available projects
+set _PROJECTS = `projsetup list`
+
+#completions
+complete proj 'p/*/$_PROJECTS/'

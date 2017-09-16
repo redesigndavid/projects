@@ -1,0 +1,62 @@
+#!/usr/bin/env python
+import os
+import sys
+
+
+def get_project():
+    try:
+        return sys.argv[1]
+    except:
+        return None
+
+
+def project_exists(projname):
+    projpath = get_projectenv_path(projname)
+    return os.path.exists(projpath)
+
+
+def get_proj_homefolder(projname):
+    projfolder = os.path.join('~', 'projects', projname)
+    projfolder = os.path.expanduser(projfolder)
+    projfolder = os.path.expandvars(projfolder)
+    return projfolder
+
+
+def get_projectenv_path(projname):
+    projpath = os.path.join(get_proj_homefolder(projname), '.environment')
+    return projpath
+
+
+def get_projectalias_path(projname):
+    projpath = os.path.join(get_proj_homefolder(projname), '.aliases')
+    return projpath
+
+
+def preent(strng):
+    print "echo %s;" % strng
+
+
+def ebal(strng):
+    print "%s;" % strng
+
+
+if __name__ == "__main__":
+    proj = get_project()
+    if proj:
+        if project_exists(proj):
+            ebal("setenv PROJ %s" % proj)
+            ebal("setenv PROJHOME %s" % get_proj_homefolder(proj))
+            ebal("cd %s" % get_proj_homefolder(proj))
+            ebal("source %s" % get_projectenv_path(proj))
+            ebal("source %s" % get_projectalias_path(proj))
+        else:
+            preent("no project named '%s' found" % proj)
+    else:
+        proj = os.getenv('PROJ', None)
+        projhome = os.getenv('PROJHOME', None)
+        if proj and projhome:
+            ebal("cd %s" % get_proj_homefolder(proj))
+            ebal("source %s" % get_projectenv_path(proj))
+            ebal("source %s" % get_projectalias_path(proj))
+        else:
+            preent("no project given")

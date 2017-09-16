@@ -1,0 +1,71 @@
+#!/usr/bin/env python
+"""project plugin.
+
+given a cocos2d project directory, sets up the project with spine.
+
+"""
+import os
+import sys
+import argparse
+import subprocess
+import shutil
+from glob import glob
+
+XPROJ = '%s/%s_cocos2d/proj.ios_mac/%s_cocos2d.xcodeproj/project.pbxproj'
+
+SPINE_RUNTIME = '/Users/redesigndavid/dev/spine-runtimes'
+SPINE_DEST = '%s/%s_cocos2d/spine'
+
+
+def run_cmd(cmd):
+    """wrapper to for running commands."""
+    print 'running: %s' % cmd
+    return subprocess.call(cmd.split(), env=os.environ, shell=False)
+
+
+def parse_arguments():
+    """parse args."""
+    args = sys.argv[:]
+    parser = argparse.ArgumentParser()
+    parser.add_argument('project_name', type=str)
+    parser.add_argument('project_dir', type=str)
+
+    args = parser.parse_args()
+    return args
+
+
+def setup_rube(project_name, project_dir):
+    print '*' * 80
+    print 'setting up spine'
+    print 'project name: %s' % project_name
+    print 'project dir: %s' % project_dir
+
+    destdir = SPINE_DEST % (project_dir, project_name)
+    project = XPROJ % (project_dir, project_name, project_name)
+
+    try:
+        os.makedirs(destdir)
+    except OSError:
+        pass
+
+    for subpath in ('spine-c/src/spine',
+                    'spine-c/include/spine',
+                    'spine-cocos2dx/3/src/spine'):
+        fullpath = os.path.join(SPINE_RUNTIME, subpath)
+        for filepath in glob("%s/*" % fullpath):
+            shutil.copy(filepath, destdir)
+
+    run_cmd("xprojedit addfiles %s // %s" % (project, destdir))
+    run_cmd('tree -tif %s' % destdir)
+    print '*' * 80
+
+
+def main():
+    args = parse_arguments()
+    project_name = args.project_name
+    project_dir = args.project_dir
+    setup_rube(project_name, project_dir)
+
+
+if __name__ == '__main__':
+    main()
